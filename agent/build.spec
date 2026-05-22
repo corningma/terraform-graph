@@ -1,16 +1,22 @@
 # -*- mode: python ; coding: utf-8 -*-
 # PyInstaller spec for tfgraph-agent (single-file binary)
 #
-# Usage:
-#   cd <repo-root>
+# 该 spec 文件位于 agent/ 目录下，PyInstaller 会以 spec 所在目录解析相对路径，
+# 因此脚本路径相对 spec 同级（不要再加 "agent/" 前缀）。
+#
+# Usage (从仓库根目录执行):
 #   pip install -r requirements-build.txt -r agent/requirements.txt
-#   pyinstaller agent/build.spec --clean
+#   pyinstaller agent/build.spec --clean --noconfirm
+
+import os
 
 block_cipher = None
 
+AGENT_DIR = SPECPATH  # 即 <repo>/agent
+
 a = Analysis(
-    ['agent/tfgraph_agent.py'],
-    pathex=[],
+    [os.path.join(AGENT_DIR, 'tfgraph_agent.py')],
+    pathex=[AGENT_DIR],
     binaries=[],
     datas=[],
     hiddenimports=[],

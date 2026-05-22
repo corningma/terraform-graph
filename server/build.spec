@@ -1,21 +1,29 @@
 # -*- mode: python ; coding: utf-8 -*-
 # PyInstaller spec for tfgraph-server (single-file binary, embeds static frontend)
 #
-# Usage:
-#   cd <repo-root>
+# 该 spec 文件位于 server/ 目录下，PyInstaller 会以 spec 所在目录解析相对路径，
+# 因此脚本和 datas 都用 spec 同级路径（不要再加 "server/" 前缀）。
+#
+# Usage (从仓库根目录执行):
 #   pip install -r requirements-build.txt -r server/requirements.txt
-#   pyinstaller server/build.spec --clean
+#   pyinstaller server/build.spec --clean --noconfirm
+
+import os
 
 block_cipher = None
 
+# SPECPATH 是 PyInstaller 注入的全局变量，指向 spec 文件所在目录
+SERVER_DIR = SPECPATH  # 即 <repo>/server
+REPO_ROOT  = os.path.dirname(SERVER_DIR)
+
 # 把 server/static 嵌入到运行时虚拟文件系统，运行时通过 sys._MEIPASS 访问
 datas = [
-    ('server/static',  'static'),
+    (os.path.join(SERVER_DIR, 'static'), 'static'),
 ]
 
 a = Analysis(
-    ['server/app.py'],
-    pathex=['server'],
+    [os.path.join(SERVER_DIR, 'app.py')],
+    pathex=[SERVER_DIR],          # 让 store / parser 等同级模块可被 import
     binaries=[],
     datas=datas,
     hiddenimports=[
