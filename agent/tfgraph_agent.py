@@ -112,7 +112,8 @@ def err(msg: str) -> None:
 # ---------------- 子命令 ----------------
 
 def cmd_ping(args: argparse.Namespace) -> int:
-    server: str = args.server
+    # 优先级：位置参数 address > --server > $TFGRAPH_SERVER
+    server: str = (getattr(args, "address", None) or args.server).rstrip("/")
     info(f"检测在线系统连通性： {server}")
     t0 = time.time()
     try:
@@ -632,7 +633,12 @@ def build_parser() -> argparse.ArgumentParser:
     # 简短 usage 并报错，体验不友好）。
     sub = p.add_subparsers(dest="subcmd", required=False)
 
-    _ = sub.add_parser("ping", help="联通性检测", parents=[common])
+    ping_p = sub.add_parser("ping", help="联通性检测", parents=[common])
+    _ = ping_p.add_argument(
+        "address", nargs="?", default=None,
+        help="（可选）直接传入服务器地址，例如 http://aa6.ai:8000；"
+             "未提供时回退到 --server 或 $TFGRAPH_SERVER",
+    )
 
     _ = sub.add_parser("init", help="注册/更新会话", parents=[common])
 
