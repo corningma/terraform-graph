@@ -1,0 +1,95 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 320" width="1200" height="320">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0B1020"/>
+      <stop offset="100%" stop-color="#1E1B4B"/>
+    </linearGradient>
+    <linearGradient id="purple" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#8B5CF6"/>
+      <stop offset="100%" stop-color="#5C4EE5"/>
+    </linearGradient>
+    <linearGradient id="cyan" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#22D3EE"/>
+      <stop offset="100%" stop-color="#3B82F6"/>
+    </linearGradient>
+    <linearGradient id="green" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#34D399"/>
+      <stop offset="100%" stop-color="#10B981"/>
+    </linearGradient>
+    <radialGradient id="glow" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#7B42BC" stop-opacity="0.55"/>
+      <stop offset="100%" stop-color="#7B42BC" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+
+  <rect width="1200" height="320" fill="url(#bg)"/>
+  <circle cx="940" cy="160" r="260" fill="url(#glow)"/>
+
+  <!-- grid dots -->
+  <g fill="#ffffff" opacity="0.06">
+    <g id="row">
+      <circle cx="40" cy="40" r="1.4"/><circle cx="80" cy="40" r="1.4"/><circle cx="120" cy="40" r="1.4"/>
+      <circle cx="160" cy="40" r="1.4"/><circle cx="200" cy="40" r="1.4"/><circle cx="240" cy="40" r="1.4"/>
+      <circle cx="280" cy="40" r="1.4"/><circle cx="320" cy="40" r="1.4"/><circle cx="360" cy="40" r="1.4"/>
+      <circle cx="400" cy="40" r="1.4"/><circle cx="440" cy="40" r="1.4"/><circle cx="480" cy="40" r="1.4"/>
+      <circle cx="520" cy="40" r="1.4"/><circle cx="560" cy="40" r="1.4"/><circle cx="600" cy="40" r="1.4"/>
+      <circle cx="640" cy="40" r="1.4"/><circle cx="680" cy="40" r="1.4"/><circle cx="720" cy="40" r="1.4"/>
+      <circle cx="760" cy="40" r="1.4"/><circle cx="800" cy="40" r="1.4"/><circle cx="840" cy="40" r="1.4"/>
+      <circle cx="880" cy="40" r="1.4"/><circle cx="920" cy="40" r="1.4"/><circle cx="960" cy="40" r="1.4"/>
+      <circle cx="1000" cy="40" r="1.4"/><circle cx="1040" cy="40" r="1.4"/><circle cx="1080" cy="40" r="1.4"/>
+      <circle cx="1120" cy="40" r="1.4"/><circle cx="1160" cy="40" r="1.4"/>
+    </g>
+    <use href="#row" y="40"/><use href="#row" y="80"/><use href="#row" y="120"/>
+    <use href="#row" y="160"/><use href="#row" y="200"/><use href="#row" y="240"/>
+  </g>
+
+  <!-- title -->
+  <g font-family="Inter, Helvetica, Arial, sans-serif" fill="#fff">
+    <text x="80" y="150" font-size="60" font-weight="800" letter-spacing="-1">Terraform Graph</text>
+    <text x="80" y="200" font-size="28" font-weight="500" fill="#A5B4FC">Realtime dependency graph &amp; live status overlay</text>
+    <g font-size="13" font-weight="600">
+      <rect x="80" y="226" width="118" height="28" rx="14" fill="#7B42BC22" stroke="#7B42BC" stroke-width="1"/>
+      <text x="139" y="245" text-anchor="middle" fill="#C4B5FD">FastAPI · WebSocket</text>
+      <rect x="208" y="226" width="92" height="28" rx="14" fill="#22D3EE22" stroke="#22D3EE" stroke-width="1"/>
+      <text x="254" y="245" text-anchor="middle" fill="#67E8F9">D3 · dagre-d3</text>
+      <rect x="310" y="226" width="92" height="28" rx="14" fill="#10B98122" stroke="#10B981" stroke-width="1"/>
+      <text x="356" y="245" text-anchor="middle" fill="#6EE7B7">Lightweight</text>
+    </g>
+  </g>
+
+  <!-- graph diagram (right side) -->
+  <g transform="translate(820, 60)">
+    <!-- edges -->
+    <g stroke="#94A3B8" stroke-width="2" fill="none" stroke-linecap="round" opacity="0.7">
+      <path d="M150,40 L70,120"/>
+      <path d="M150,40 L230,120"/>
+      <path d="M70,120 L150,200"/>
+      <path d="M230,120 L150,200"/>
+      <path d="M70,120 L230,120" stroke-dasharray="4 4" opacity="0.5"/>
+    </g>
+
+    <!-- root -->
+    <circle cx="150" cy="40" r="22" fill="url(#purple)" stroke="#fff" stroke-opacity="0.3" stroke-width="1.5"/>
+    <text x="150" y="46" text-anchor="middle" font-family="Inter" font-size="14" font-weight="700" fill="#fff">TF</text>
+
+    <!-- queued -->
+    <circle cx="70" cy="120" r="18" fill="url(#cyan)" stroke="#fff" stroke-opacity="0.3" stroke-width="1.5"/>
+
+    <!-- running with pulse -->
+    <circle cx="230" cy="120" r="18" fill="url(#green)" stroke="#fff" stroke-opacity="0.3" stroke-width="1.5"/>
+    <circle cx="230" cy="120" r="18" fill="none" stroke="#34D399" stroke-width="2" opacity="0.6">
+      <animate attributeName="r" values="18;30;18" dur="2.4s" repeatCount="indefinite"/>
+      <animate attributeName="opacity" values="0.6;0;0.6" dur="2.4s" repeatCount="indefinite"/>
+    </circle>
+
+    <!-- complete -->
+    <circle cx="150" cy="200" r="16" fill="#F59E0B" stroke="#fff" stroke-opacity="0.3" stroke-width="1.5"/>
+
+    <!-- legend -->
+    <g font-family="Inter" font-size="11" fill="#CBD5E1">
+      <circle cx="14" cy="240" r="5" fill="url(#cyan)"/><text x="26" y="244">queued</text>
+      <circle cx="84" cy="240" r="5" fill="url(#green)"/><text x="96" y="244">running</text>
+      <circle cx="166" cy="240" r="5" fill="#F59E0B"/><text x="178" y="244">complete</text>
+    </g>
+  </g>
+</svg>

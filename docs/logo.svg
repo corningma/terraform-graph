@@ -1,0 +1,67 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" width="200" height="200">
+  <defs>
+    <linearGradient id="g1" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#7B42BC"/>
+      <stop offset="100%" stop-color="#5C4EE5"/>
+    </linearGradient>
+    <linearGradient id="g2" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#22D3EE"/>
+      <stop offset="100%" stop-color="#3B82F6"/>
+    </linearGradient>
+    <linearGradient id="g3" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#34D399"/>
+      <stop offset="100%" stop-color="#10B981"/>
+    </linearGradient>
+    <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur in="SourceAlpha" stdDeviation="2"/>
+      <feOffset dx="0" dy="2" result="offsetblur"/>
+      <feComponentTransfer><feFuncA type="linear" slope="0.25"/></feComponentTransfer>
+      <feMerge><feMergeNode/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+  </defs>
+
+  <!-- background rounded square -->
+  <rect x="6" y="6" width="188" height="188" rx="36" ry="36" fill="#0F172A"/>
+  <rect x="6" y="6" width="188" height="188" rx="36" ry="36" fill="url(#g1)" opacity="0.18"/>
+
+  <!-- edges -->
+  <g stroke="#94A3B8" stroke-width="2.4" fill="none" stroke-linecap="round" opacity="0.85">
+    <path d="M100,58 L52,108"/>
+    <path d="M100,58 L148,108"/>
+    <path d="M52,108 L100,150"/>
+    <path d="M148,108 L100,150"/>
+    <path d="M52,108 L148,108" stroke-dasharray="4 4" opacity="0.55"/>
+  </g>
+
+  <!-- root node -->
+  <g filter="url(#shadow)">
+    <circle cx="100" cy="58" r="18" fill="url(#g1)"/>
+    <circle cx="100" cy="58" r="18" fill="none" stroke="#fff" stroke-opacity="0.35" stroke-width="1.5"/>
+  </g>
+
+  <!-- left node -->
+  <g filter="url(#shadow)">
+    <circle cx="52" cy="108" r="15" fill="url(#g2)"/>
+    <circle cx="52" cy="108" r="15" fill="none" stroke="#fff" stroke-opacity="0.35" stroke-width="1.5"/>
+  </g>
+
+  <!-- right node (running pulse) -->
+  <g filter="url(#shadow)">
+    <circle cx="148" cy="108" r="15" fill="url(#g3)"/>
+    <circle cx="148" cy="108" r="15" fill="none" stroke="#fff" stroke-opacity="0.35" stroke-width="1.5"/>
+    <circle cx="148" cy="108" r="15" fill="none" stroke="#34D399" stroke-width="2" opacity="0.6">
+      <animate attributeName="r" values="15;24;15" dur="2.4s" repeatCount="indefinite"/>
+      <animate attributeName="opacity" values="0.6;0;0.6" dur="2.4s" repeatCount="indefinite"/>
+    </circle>
+  </g>
+
+  <!-- bottom node -->
+  <g filter="url(#shadow)">
+    <circle cx="100" cy="150" r="14" fill="#F59E0B"/>
+    <circle cx="100" cy="150" r="14" fill="none" stroke="#fff" stroke-opacity="0.35" stroke-width="1.5"/>
+  </g>
+
+  <!-- TF mark on root -->
+  <text x="100" y="63" text-anchor="middle" font-family="Inter, Helvetica, Arial, sans-serif"
+        font-size="14" font-weight="700" fill="#fff">TF</text>
+</svg>

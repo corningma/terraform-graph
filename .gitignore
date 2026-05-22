@@ -1,0 +1,86 @@
+# ============================================================
+# Terraform Graph Online — Git Ignore
+# ============================================================
+
+# ---------- Python ----------
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+*.egg
+*.egg-info/
+.eggs/
+dist/
+build/
+develop-eggs/
+.installed.cfg
+pip-wheel-metadata/
+share/python-wheels/
+
+# 虚拟环境
+.venv/
+venv/
+env/
+ENV/
+
+# pytest / coverage
+.pytest_cache/
+.coverage
+.coverage.*
+htmlcov/
+.tox/
+.nox/
+.cache/
+
+# 类型检查 / Lint 缓存
+.mypy_cache/
+.pytype/
+.ruff_cache/
+.pyre/
+.dmypy.json
+
+# ---------- SQLite ----------
+# 仅忽略运行时副产物；保留主库文件由项目策略决定
+*.db-shm
+*.db-wal
+*.db-journal
+
+# 默认连主库一并忽略，避免把本地数据提交到远端仓库
+server/data.db
+
+# ---------- 项目运行时 ----------
+*.log
+logs/
+*.pid
+
+# Agent 本地安装目录（用户级）
+.tfgraph/
+
+# ---------- IDE / 编辑器 ----------
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+.project
+.classpath
+
+# ---------- macOS / Windows / Linux ----------
+.DS_Store
+.AppleDouble
+.LSOverride
+Thumbs.db
+Desktop.ini
+
+# ---------- Node / 前端缓存（如果将来引入构建工具） ----------
+node_modules/
+.cache/
+.parcel-cache/
+.next/
+.nuxt/
+out/
+
+# ---------- CodeBuddy / OpenSpec ----------
+# 项目级数据目录（不要删！但通常无需提交）
+# .codebuddy/   # 默认保留，按需打开
