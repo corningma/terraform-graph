@@ -41,6 +41,7 @@ from __future__ import annotations
 
 import asyncio
 import re
+import sys
 import uuid
 from pathlib import Path
 from typing import Any, cast
@@ -56,9 +57,21 @@ import store
 from parser import parse_dot  # pyright: ignore[reportAttributeAccessIssue]
 
 
+def _resource_dir() -> Path:
+    """返回静态资源根目录：
+    - 源码运行：当前文件所在目录
+    - PyInstaller 单文件打包：sys._MEIPASS 指向运行时解压目录
+    """
+    if getattr(sys, "frozen", False) and hasattr(sys, "_MEIPASS"):
+        return Path(str(getattr(sys, "_MEIPASS")))  # pyright: ignore[reportAny]
+    return Path(__file__).parent
+
+
 BASE_DIR = Path(__file__).parent
-STATIC_DIR = BASE_DIR / "static"
-AGENT_DIR = BASE_DIR.parent / "agent"
+RES_DIR = _resource_dir()
+STATIC_DIR = RES_DIR / "static"
+# 二进制构建时不带 agent 源码；agent/* 路由在 fp 不存在时返回 404，无副作用
+AGENT_DIR = (BASE_DIR.parent if not getattr(sys, "frozen", False) else RES_DIR) / "agent"
 
 # JSON 事件 / 通用字典
 JsonDict = dict[str, Any]
@@ -455,5 +468,9 @@ async def http_exc(_: Any, exc: HTTPException) -> JSONResponse:
 
 
 if __name__ == "__main__":
+    import os
     import uvicorn
-    uvicorn.run("app:app", host="0.0.0.0", port=8000, reload=False)
+    host = os.environ.get("TFGRAPH_HOST", "0.0.0.0")
+    port = int(os.environ.get("TFGRAPH_PORT", "8000"))
+    # 直接传入 app 对象，兼容 PyInstaller 单文件打包（frozen 模式下无 "app:app" 模块路径）
+    uvicorn.run(app, host=host, port=port, reload=False)

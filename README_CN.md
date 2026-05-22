@@ -103,6 +103,32 @@ terraform-graph/
 └── README.md
 ```
 
+## 📦 下载
+
+预编译的**单文件二进制**通过 [Releases](https://github.com/corningma/terraform-graph/releases/latest) 发布 —— 目标机器**无需安装 Python**。
+
+| 平台 | Server | Agent |
+|---|---|---|
+| Linux x86_64 | `tfgraph-server-linux-amd64` | `tfgraph-agent-linux-amd64` |
+| macOS Intel | `tfgraph-server-darwin-amd64` | `tfgraph-agent-darwin-amd64` |
+| macOS Apple 芯片 | `tfgraph-server-darwin-arm64` | `tfgraph-agent-darwin-arm64` |
+| Windows x64 | `tfgraph-server-windows-amd64.exe` | `tfgraph-agent-windows-amd64.exe` |
+
+```bash
+# Server
+curl -fsSL -o tfgraph-server \
+  https://github.com/corningma/terraform-graph/releases/latest/download/tfgraph-server-linux-amd64
+chmod +x tfgraph-server && ./tfgraph-server
+
+# Agent
+curl -fsSL -o tfgraph-agent \
+  https://github.com/corningma/terraform-graph/releases/latest/download/tfgraph-agent-linux-amd64
+chmod +x tfgraph-agent
+TFGRAPH_SERVER=http://<server-ip>:8000 ./tfgraph-agent ping
+```
+
+> 想从源码运行？继续阅读开发者部署流程 ↓
+
 ## 🚀 快速开始
 
 ### 1. 启动在线系统

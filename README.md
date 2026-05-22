@@ -103,6 +103,32 @@ terraform-graph/
 └── README.md
 ```
 
+## 📦 Download
+
+Pre-built **single-file binaries** are published to [Releases](https://github.com/corningma/terraform-graph/releases/latest) — no Python required on target machines.
+
+| Platform | Server | Agent |
+|---|---|---|
+| Linux x86_64 | `tfgraph-server-linux-amd64` | `tfgraph-agent-linux-amd64` |
+| macOS Intel | `tfgraph-server-darwin-amd64` | `tfgraph-agent-darwin-amd64` |
+| macOS Apple Silicon | `tfgraph-server-darwin-arm64` | `tfgraph-agent-darwin-arm64` |
+| Windows x64 | `tfgraph-server-windows-amd64.exe` | `tfgraph-agent-windows-amd64.exe` |
+
+```bash
+# Server
+curl -fsSL -o tfgraph-server \
+  https://github.com/corningma/terraform-graph/releases/latest/download/tfgraph-server-linux-amd64
+chmod +x tfgraph-server && ./tfgraph-server
+
+# Agent
+curl -fsSL -o tfgraph-agent \
+  https://github.com/corningma/terraform-graph/releases/latest/download/tfgraph-agent-linux-amd64
+chmod +x tfgraph-agent
+TFGRAPH_SERVER=http://<server-ip>:8000 ./tfgraph-agent ping
+```
+
+> Prefer running from source? Read on for the developer flow ↓
+
 ## 🚀 Quick Start
 
 ### 1. Start the server

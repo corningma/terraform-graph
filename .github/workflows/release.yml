@@ -1,0 +1,224 @@
+name: Release
+
+# 触发条件：推送 v* tag（如 v1.0.0）或手动触发
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Release tag (e.g. v1.0.0). 留空则使用时间戳作为预发布。'
+        required: false
+        default: ''
+
+permissions:
+  contents: write   # 创建 Release 需要
+
+jobs:
+  # ======================================================================
+  # 1. 多平台构建二进制
+  # ======================================================================
+  build:
+    name: Build ${{ matrix.target }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - target: linux-amd64
+            os: ubuntu-latest
+            python: '3.12'
+            archive: tar.gz
+          - target: darwin-amd64
+            os: macos-13
+            python: '3.12'
+            archive: tar.gz
+          - target: darwin-arm64
+            os: macos-14
+            python: '3.12'
+            archive: tar.gz
+          - target: windows-amd64
+            os: windows-latest
+            python: '3.12'
+            archive: zip
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python ${{ matrix.python }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python }}
+          cache: 'pip'
+
+      - name: Install build deps
+        shell: bash
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements-build.txt
+          pip install -r server/requirements.txt
+          pip install -r agent/requirements.txt
+
+      - name: Build tfgraph-server
+        shell: bash
+        run: pyinstaller server/build.spec --clean --noconfirm
+
+      - name: Build tfgraph-agent
+        shell: bash
+        run: pyinstaller agent/build.spec --clean --noconfirm
+
+      - name: Stage artifacts (Unix)
+        if: runner.os != 'Windows'
+        shell: bash
+        run: |
+          set -e
+          mkdir -p stage
+          cp dist/tfgraph-server stage/tfgraph-server-${{ matrix.target }}
+          cp dist/tfgraph-agent  stage/tfgraph-agent-${{ matrix.target }}
+          chmod +x stage/*
+
+      - name: Stage artifacts (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force stage | Out-Null
+          Copy-Item dist/tfgraph-server.exe "stage/tfgraph-server-${{ matrix.target }}.exe"
+          Copy-Item dist/tfgraph-agent.exe  "stage/tfgraph-agent-${{ matrix.target }}.exe"
+
+      - name: Pack archive (Unix)
+        if: matrix.archive == 'tar.gz'
+        shell: bash
+        run: |
+          cd stage
+          tar -czf "../tfgraph-${{ matrix.target }}.tar.gz" \
+            "tfgraph-server-${{ matrix.target }}" \
+            "tfgraph-agent-${{ matrix.target }}"
+          cd ..
+          shasum -a 256 "tfgraph-${{ matrix.target }}.tar.gz" \
+            "stage/tfgraph-server-${{ matrix.target }}" \
+            "stage/tfgraph-agent-${{ matrix.target }}" \
+            > "tfgraph-${{ matrix.target }}.sha256"
+
+      - name: Pack archive (Windows)
+        if: matrix.archive == 'zip'
+        shell: pwsh
+        run: |
+          Compress-Archive -Path "stage/*" -DestinationPath "tfgraph-${{ matrix.target }}.zip"
+          Get-FileHash "tfgraph-${{ matrix.target }}.zip","stage/tfgraph-server-${{ matrix.target }}.exe","stage/tfgraph-agent-${{ matrix.target }}.exe" -Algorithm SHA256 |
+            ForEach-Object { "$($_.Hash.ToLower())  $($_.Path)" } |
+            Out-File -FilePath "tfgraph-${{ matrix.target }}.sha256" -Encoding ascii
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: tfgraph-${{ matrix.target }}
+          path: |
+            tfgraph-${{ matrix.target }}.*
+            stage/tfgraph-server-${{ matrix.target }}*
+            stage/tfgraph-agent-${{ matrix.target }}*
+          if-no-files-found: error
+          retention-days: 7
+
+  # ======================================================================
+  # 2. 汇总 + 发布 Release
+  # ======================================================================
+  release:
+    name: Publish Release
+    needs: build
+    runs-on: ubuntu-latest
+    if: startsWith(github.ref, 'refs/tags/v') || github.event_name == 'workflow_dispatch'
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+
+      - name: Flatten artifacts
+        shell: bash
+        run: |
+          mkdir -p release
+          find artifacts -maxdepth 3 -type f \
+            \( -name 'tfgraph-*' -o -name '*.tar.gz' -o -name '*.zip' -o -name '*.sha256' \) \
+            -exec cp -v {} release/ \;
+          cat release/*.sha256 > release/SHA256SUMS.txt || true
+          ls -lh release/
+
+      - name: Resolve tag
+        id: tag
+        shell: bash
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            TAG="${{ github.event.inputs.tag }}"
+            [ -z "$TAG" ] && TAG="dev-$(date +%Y%m%d-%H%M%S)"
+          else
+            TAG="${GITHUB_REF#refs/tags/}"
+          fi
+          echo "tag=$TAG" >> "$GITHUB_OUTPUT"
+          echo "Resolved tag: $TAG"
+
+      - name: Generate Release Notes
+        shell: bash
+        run: |
+          cat > RELEASE_NOTES.md <<'EOF'
+          ## Terraform Graph Online — ${{ steps.tag.outputs.tag }}
+
+          🎉 Pre-built binaries for **Linux / macOS / Windows**.
+          No Python required on target machines.
+
+          ### Download
+
+          | Platform        | Server                                  | Agent                                  |
+          |-----------------|-----------------------------------------|----------------------------------------|
+          | Linux x86_64    | `tfgraph-server-linux-amd64`            | `tfgraph-agent-linux-amd64`            |
+          | macOS Intel     | `tfgraph-server-darwin-amd64`           | `tfgraph-agent-darwin-amd64`           |
+          | macOS Apple     | `tfgraph-server-darwin-arm64`           | `tfgraph-agent-darwin-arm64`           |
+          | Windows x64     | `tfgraph-server-windows-amd64.exe`      | `tfgraph-agent-windows-amd64.exe`      |
+
+          ### Quick Start
+
+          **Server (Linux/macOS):**
+          ```bash
+          curl -fsSL -o tfgraph-server \
+            https://github.com/${{ github.repository }}/releases/download/${{ steps.tag.outputs.tag }}/tfgraph-server-linux-amd64
+          chmod +x tfgraph-server
+          ./tfgraph-server   # listens on :8000
+          ```
+
+          **Agent (Linux/macOS):**
+          ```bash
+          curl -fsSL -o tfgraph-agent \
+            https://github.com/${{ github.repository }}/releases/download/${{ steps.tag.outputs.tag }}/tfgraph-agent-linux-amd64
+          chmod +x tfgraph-agent
+          export TFGRAPH_SERVER=http://<server-ip>:8000
+          ./tfgraph-agent ping
+          ```
+
+          **Verify checksums:**
+          ```bash
+          curl -fsSL -O https://github.com/${{ github.repository }}/releases/download/${{ steps.tag.outputs.tag }}/SHA256SUMS.txt
+          shasum -a 256 -c SHA256SUMS.txt
+          ```
+
+          ---
+          **AI-generated project** — see [LICENSE](https://github.com/${{ github.repository }}/blob/master/LICENSE).
+          EOF
+
+      - name: Create / Update Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.tag.outputs.tag }}
+          name: ${{ steps.tag.outputs.tag }}
+          body_path: RELEASE_NOTES.md
+          draft: false
+          prerelease: ${{ contains(steps.tag.outputs.tag, '-') }}
+          files: |
+            release/tfgraph-server-*
+            release/tfgraph-agent-*
+            release/tfgraph-*.tar.gz
+            release/tfgraph-*.zip
+            release/SHA256SUMS.txt

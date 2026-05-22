@@ -1,0 +1,2 @@
+# PyInstaller 构建依赖（仅 CI/打包时使用）
+pyinstaller>=6.10.0
