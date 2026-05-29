@@ -187,6 +187,87 @@ tfgraph-agent tail /path/to/terraform.log
 tfgraph-agent upload-log /path/to/terraform.log
 ```
 
+## 🧹 卸载
+
+### 停止 Agent（不删数据）
+
+```bash
+# 停止后台守护（TF_LOG tail / 命令监控）
+tfgraph-agent daemon-stop
+
+# 确认已停止
+tfgraph-agent daemon-status
+```
+
+### 注销当前会话（同时删除服务端数据）
+
+`logout` 会停止本地 daemon、清理本地 offset/缓存文件，并**删除服务端的会话、依赖图、所有日志**：
+
+```bash
+tfgraph-agent logout                              # 当前目录对应的会话
+tfgraph-agent logout --sid <session-id>           # 指定会话
+tfgraph-agent logout --server http://<srv>:8000   # 指定服务端
+```
+
+需要重新使用时执行 `tfgraph-agent init` 即可。
+
+### 完整卸载 Agent
+
+**Linux / macOS** —— 安装脚本自带 `--uninstall`，会自动：
+
+1. 停止 daemon（`tfgraph-agent daemon-stop`）
+2. 删除 `~/.tfgraph/`（二进制、脚本、env、状态文件、daemon 文件）
+3. 清理 `~/.bashrc`、`~/.zshrc`、`~/.profile` 中的 PATH 与 source 行
+
+```bash
+# install.sh 还在本地
+bash install.sh --uninstall
+
+# 或从服务端重新拉取脚本执行
+curl -fsSL http://<server-ip>:8000/install.sh | bash -s -- --uninstall
+```
+
+手动清理（兜底）：
+
+```bash
+tfgraph-agent daemon-stop || true
+rm -rf ~/.tfgraph
+# 再手动从 shell 配置文件中删除 `source ~/.tfgraph/env` 这一行
+```
+
+**Windows（PowerShell）**：
+
+```powershell
+# 停掉 daemon
+tfgraph-agent daemon-stop
+
+# 删除安装目录
+Remove-Item -Recurse -Force "$env:USERPROFILE\.tfgraph"
+
+# 从用户级 PATH 中移除 tfgraph 路径（之后新开终端生效）
+[Environment]::SetEnvironmentVariable(
+  "Path",
+  ([Environment]::GetEnvironmentVariable("Path", "User") -split ';' |
+    Where-Object { $_ -notmatch '\\.tfgraph\\bin$' }) -join ';',
+  "User"
+)
+```
+
+### 重置 / 清空服务端
+
+要彻底清空服务端的所有会话、依赖图与日志：
+
+```bash
+# 1. 先停止 server 进程（systemctl 或 lsof + kill 都可以）
+
+# 2. 删除 SQLite 数据库（这是唯一的持久化状态）
+rm -f /path/to/data.db /path/to/data.db-shm /path/to/data.db-wal
+
+# 3. 重启 server，会自动创建空数据库
+```
+
+如果只想删某一个会话，可以在浏览器顶栏的 `···` 菜单 → **删除会话**，无需动数据库。
+
 ## 🧠 设计要点
 
 - **只依赖 `terraform graph`**：完整依赖图来自 DOT 输出，无需 `plan`/`apply` 权限。

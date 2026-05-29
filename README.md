@@ -187,6 +187,88 @@ tfgraph-agent tail /path/to/terraform.log
 tfgraph-agent upload-log /path/to/terraform.log
 ```
 
+## 🧹 Uninstall
+
+### Stop the agent (no data deletion)
+
+```bash
+# Stop the background daemon (TF_LOG tailing, command watching)
+tfgraph-agent daemon-stop
+
+# Verify it's gone
+tfgraph-agent daemon-status
+```
+
+### Logout one session (delete it from the server)
+
+This stops the local daemon, removes local offset/cache files, and **deletes the session, its graph and all logs from the server**:
+
+```bash
+tfgraph-agent logout                            # uses current dir's session
+tfgraph-agent logout --sid <session-id>         # specific session
+tfgraph-agent logout --server http://<srv>:8000 # remote server
+```
+
+Re-register with `tfgraph-agent init` whenever needed.
+
+### Uninstall the agent completely
+
+**Linux / macOS** — the installer ships an `--uninstall` flag that:
+
+1. Stops the daemon (`tfgraph-agent daemon-stop`)
+2. Removes `~/.tfgraph/` (binaries, scripts, env, state, daemon files)
+3. Cleans up PATH/`source` lines from `~/.bashrc`, `~/.zshrc`, `~/.profile`
+
+```bash
+# If install.sh is still around
+bash install.sh --uninstall
+
+# Or fetch it from the server again
+curl -fsSL http://<server-ip>:8000/install.sh | bash -s -- --uninstall
+```
+
+Manual cleanup as a fallback:
+
+```bash
+tfgraph-agent daemon-stop || true
+rm -rf ~/.tfgraph
+# Then remove any `source ~/.tfgraph/env` lines from your shell rc files
+```
+
+**Windows (PowerShell)**:
+
+```powershell
+# Stop the daemon if it's running
+tfgraph-agent daemon-stop
+
+# Remove the install dir
+Remove-Item -Recurse -Force "$env:USERPROFILE\.tfgraph"
+
+# Remove tfgraph-agent from user PATH (open a new terminal afterwards)
+[Environment]::SetEnvironmentVariable(
+  "Path",
+  ([Environment]::GetEnvironmentVariable("Path", "User") -split ';' |
+    Where-Object { $_ -notmatch '\\.tfgraph\\bin$' }) -join ';',
+  "User"
+)
+```
+
+### Reset / wipe the server
+
+To clear all sessions, graphs and logs from the server:
+
+```bash
+# Stop the server first
+# (find its PID, e.g. via systemctl/lsof, then kill it)
+
+# Delete the SQLite database — it's the only persistent state
+rm -f /path/to/data.db /path/to/data.db-shm /path/to/data.db-wal
+
+# Restart the server; an empty database will be created on next launch
+```
+
+You can also wipe a single session via the UI ("Delete session" in the `···` menu) without touching the database file.
+
 ## 🧠 Design Highlights
 
 - **Only depends on `terraform graph`** — the full dependency graph comes from DOT, no `plan`/`apply` privilege needed.
